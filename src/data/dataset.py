@@ -46,7 +46,7 @@ def create_clean_data() -> None:
     def extract(row) -> dict:
         return {
             'date': datetime.strptime(row[1], '%m/%d/%y').strftime('%Y-%m-%d'),
-            'adj_close': float(row[6])
+            'adj_close': float(row[6]) * 1.44 # Convert to CAD
         }
     
     # Save data to a new .csv file
@@ -60,8 +60,8 @@ def create_clean_data() -> None:
     with open(raw_file_path, 'r') as csv_file:
         reader = csv.reader(csv_file)
         for i, row in enumerate(reader):
-            # Skip header row and only use stock prices from 2021 - 2024
-            if i == 0 or not row[1][-2:] in ['21', '22', '23', '24']:
+            # Skip header row
+            if i == 0:
                 continue
 
             clean_data.append(extract(row))
@@ -69,8 +69,6 @@ def create_clean_data() -> None:
     save(clean_data)
     print("Clean .csv file created at: src/data/TESLA_CLEANED.CSV")
         
-
-    
 if __name__ == '__main__':
     # Test get_data()
     print(get_data())
