@@ -3,6 +3,7 @@ import os
 import shutil
 import csv
 from datetime import datetime
+import pandas
 
 # Downloads the tesla stock dataset from Kaggle.
 def download_dataset() -> None:
@@ -13,7 +14,8 @@ def download_dataset() -> None:
     shutil.move(source_path, target_path)
     print(f"Dataset downloaded successfully at: {target_path}")
 
-def get_data():
+# Returns the Tesla stock data from 2021 - 2024
+def get_data() -> list[dict]:
     data = []
 
     # Create clean csv file
@@ -26,15 +28,13 @@ def get_data():
             if i == 0 or len(row) == 0:
                 continue
 
-            row[1] = float(row[1])
-            row[2] = float(row[2])
-            
-            data.append(row)
+            # because for some reason the price are converted right back to strings...
+            data.append({'date': pandas.to_datetime(row[0]), 'adj_close': float(row[1])})
 
     return data
 
 
-def create_clean_data():
+def create_clean_data() -> None:
     raw_file_path = 'src/data/TESLA.csv'
     # Check if file exists
     if not os.path.exists(raw_file_path):
@@ -42,18 +42,17 @@ def create_clean_data():
     
     clean_data = []
 
-    # Extract relevant data (only using close and adj_close because I'm making a simple prediction)
+    # Extract relevant data (only using adj_close because I'm making a simple prediction)
     def extract(row) -> dict:
         return {
             'date': datetime.strptime(row[1], '%m/%d/%y').strftime('%Y-%m-%d'),
-            'close': float(row[5]), 
             'adj_close': float(row[6])
         }
     
     # Save data to a new .csv file
     def save(data) -> None:
         with open('src/data/TESLA_CLEANED.CSV', 'w') as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=['date', 'close', "adj_close"])
+            writer = csv.DictWriter(csv_file, fieldnames=['date', 'adj_close'])
             writer.writeheader()
             writer.writerows(data)
 
@@ -61,17 +60,17 @@ def create_clean_data():
     with open(raw_file_path, 'r') as csv_file:
         reader = csv.reader(csv_file)
         for i, row in enumerate(reader):
-            # Skip header row
-            if i == 0:
+            # Skip header row and only use stock prices from 2021 - 2024
+            if i == 0 or not row[1][-2:] in ['21', '22', '23', '24']:
                 continue
 
             clean_data.append(extract(row))
     
     save(clean_data)
-
     print("Clean .csv file created at: src/data/TESLA_CLEANED.CSV")
         
 
     
 if __name__ == '__main__':
+    # Test get_data()
     print(get_data())
